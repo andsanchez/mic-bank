@@ -1,0 +1,168 @@
+openapi: 3.0.3
+info:
+  title: Bank Transactions Api
+  description: Handle the info about bank transactions in the platform.
+  version: "1.0"
+tags:
+  - name: transaction
+    description: Available operations for transaction domain.
+paths:
+  /v1/transactions:
+    post:
+      tags:
+        - transaction
+      summary: Create transaction
+      description: >-
+        This endpoint will receive the transaction information and store it into the platform.
+        Transactions that leaves the total account balance bellow 0 is not allowed.
+      operationId: createTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+      responses:
+        200:
+          description: Transaction created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        400:
+          description: Bad request
+        500:
+          description: Unexpected error
+  /v1/transactions/{account_iban}:
+    get:
+      tags:
+        - transaction
+      summary: This endpoint searches transactions by IBAN.
+      operationId: getTransactions
+      parameters:
+        - in: path
+          description: The IBAN number of the account where the transaction has happened.
+          name: account_iban
+          required: true
+          schema:
+            type: string
+        - in: query
+          description: Indicates if response returns the transactions sort by amount ascending. Sort descending by default.
+          name: orderByAmountAsc
+          required: false
+          schema:
+            type: boolean
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+        400:
+          description: Bad request
+        500:
+          description: Unexpected error
+  /v1/transactions/:
+    get:
+      tags:
+        - transaction
+      summary: This endpoint returns the status and additional information for a specific transaction.
+      operationId: getTransactionStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionStatusRequest'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionStatusResponse'
+        400:
+          description: Bad request
+        500:
+          description: Unexpected error
+components:
+  schemas:
+    Transaction:
+      type: object
+      properties:
+        reference:
+          type: string
+          description: The transaction unique reference number in platform. If not present, the system will generate one.
+          example: "12345A"
+        account_iban:
+          type: string
+          description: The IBAN number of the account where the transaction has happened.
+          example: "ES9820385778983000760236"
+        date:
+          type: string
+          format: date-time
+          description: Date when the transaction took place. As defined by date-time - RFC3339.
+          example: "2022-02-27T21:55:42.000Z"
+        amount:
+          type: number
+          format: double
+          description: If positive the transaction is a credit (add money) to the account. If negative it is a debit (deduct money from the account).
+          example: 193.38
+        fee:
+          type: number
+          format: double
+          description: Fee that will be deducted from the amount, regardless on the amount being positive or negative.
+          example: 3.18
+        description:
+          type: string
+          description: The description of the transaction.
+          example: "Restaurant payment"
+      required:
+        - account_iban
+        - amount
+    TransactionStatusRequest:
+      type: object
+      properties:
+        reference:
+          type: string
+          description: The transaction reference number.
+          example: "12345A"
+        channel:
+          type: string
+          description: "The type of the channel that is asking for the status. It can be any of these values: CLIENT, ATM, INTERNAL."
+          example: "ATM"
+          enum:
+          - CLIENT
+          - ATM
+          - INTERNAL
+      required:
+        - reference
+    TransactionStatusResponse:
+      type: object
+      properties:
+        reference:
+          type: string
+          description: The transaction reference number.
+          example: "12345A"
+        status:
+          type: string
+          description: "The status of the transaction. It can be any of these values: PENDING, SETTLED, FUTURE, INVALID."
+          example: "SETTLED"
+          enum:
+            - PENDING
+            - SETTLED
+            - FUTURE
+            - INVALID
+        amount:
+          type: number
+          format: double
+          description: The amount of the transaction.
+          example: 193.38
+        fee:
+          type: number
+          format: double
+          description: The fee applied to the transaction.
+          example: 3.18

@@ -1,0 +1,18 @@
+logging:
+  level:
+    root: info
+    io.andsanchez.bank: debug
+server:
+  error:
+    include-message: always
+    include-stacktrace: never
+spring:
+  mongodb:
+    embedded:
+      version: 4.0.12
+  data:
+    mongodb:
+      database: bank
+springfox:
+  documentation:
+    auto-startup: false
